@@ -1,0 +1,698 @@
+---
+title: "Project1"
+author: "Shailesh Alluri"
+date: "2022-10-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(MASS)
+library(knitr)
+library(GGally)
+library(dplyr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Exploratory Data Analysis(EDA)
+
+```{r }
+df = read.csv("master_table.csv")
+```
+```{r}
+Y = df$Pts.Won
+X = (df[-c(8)])
+c = 1
+names = names(df)
+cor = rep.int(0, 41)
+nm = rep('c', 41)
+for (i in 3:ncol(df)){
+  typeof(df[,i])
+  #print(i)
+  if (i ==4) next
+  if (i ==22) next
+ r = cor(df[,i],Y)
+ cor[c] = r
+ nm[c] = names[i]
+ c = c+1
+}
+```
+
+
+Lets us plot a histogram for correlation of features with the response variable Pts.Won
+```{r}
+df_var = data.frame(feature = nm, correlation = cor)
+ggplot(df_var, aes(x= feature, y = correlation)) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+From the above histogram, we see that there are 12 features with correlation greater than 0.5 let us see what they are to get a better understanding.
+
+Box_plus_minus
+Offensive_box_plus_minus
+Offensive_win_shares
+Player_effficiency_rating
+Pts_Won
+Share
+value_over_replacememnt_player
+win_shares
+win_shares_per_48_minues
+WS
+WS_48
+
+Box_plus_minus : Box Plus/Minus, Version 2.0 (BPM) is a basketball box score-based metric that estimates a basketball player’s contribution to the team when that player is on the court. It is based only on the information in the traditional basketball box score--no play-by-play data or non-traditional box score data (like dunks or deflections) are included.
+
+BPM uses a player’s box score information, position, and the team’s overall performance to estimate the player’s contribution in points above league average per 100 possessions played. BPM does not take into account playing time -- it is purely a rate stat!
+
+Offensive_box_plus_minus : It is the box+plus_minus score claculated when the team is on offense.
+
+
+
+Box_plus_minus = Offensive_box_plus_minus + defensive_box_plus_minus
+
+Pts_Won : Total MVP points awarded to the player for that season.
+
+player efficiency rating : The player efficiency rating (PER) is John Hollinger's all-in-one basketball rating, which attempts to collect or boil down all of a player's contributions into one number.
+
+Offensive_win_shares : Offensive Win Shares are credited using the following formula: (marginal offense) / (marginal points per win). James gets credit for 424.8 / 30.95 = 13.73 Offensive Win Shares.
+
+Pts.Won : Response variable.
+
+ value_over_replacememnt_player  : a box score estimate of the points per 100 TEAM possessions that a player contributed above a replacement-level (-2.0) player.
+ 
+ win_shares : number of win shares a player secured in a season.
+ 
+ win_shares_per_48_minues : Win Share is a measure that is assigned to players based on their offense, defense, and playing time. WS/48 is win shares per 48 minutes and invented by Justin Kubatko who explains: “A win share is worth one-third of a team win.
+ 
+ WS : win_shares(already listed above so one of them could  be droped.)
+ 
+ WS_48 : win_shares_per_48_minutes(already listed above, so one of them could be dropped.)
+ 
+NOTE : Shares = Points Won/ Total MVP points for that season
+
+```{r}
+library(tidyverse)
+ggplot(data = df, aes(Pts.Won,box_plus_minus )) + geom_point()
+```
+
+```{r}
+ggplot(data = df, aes(Pts.Won,WS )) + geom_point()
+```
+
+```{r}
+ggplot(data = df, aes(Pts.Won,WS.48 )) + geom_point()
+```
+
+```{r}
+ggplot(data = df, aes(Pts.Won,value_over_replacement_player )) + geom_point()
+```
+
+```{r}
+
+ggplot(data = df, aes(Pts.Won,player_efficiency_rating )) + geom_point()
+
+```
+
+```{r}
+
+ggplot(data = df, aes(Pts.Won,offensive_box_plus_minus )) + geom_point()
+
+```
+
+```{r}
+
+ggplot(data = df, aes(Pts.Won,offensive_win_shares )) + geom_point()
+
+```
+
+As we saw above all of the features seem to have a good correlation with the predictor. But if you notice, there are some predictors that have highly correlated. It is going to be a challenge on how to deal with them. Let's also look at some plots of feature that have low corrleation with the response variable.
+
+```{r}
+ggplot(data = df, aes(Pts.Won,block_percentage )) + geom_point()
+```
+
+```{r}
+ggplot(data = df, aes(Pts.Won,steal_percentage )) + geom_point()
+```
+
+```{r}
+ggplot(data = df, aes(Pts.Won,AST )) + geom_point()
+```
+
+As we can see from the above plots. The features have almost no correlation with Pts.Won, the response variable. If you look at the correlation plot of the features we notice that many advanced statistics that highlight team and individual player success and/or efficiency rank high on this mutual information score visualization. However, it is interesting to note that several major counting box score stats (assists, blocks, steals) are on the bottom of this list. One theory could be that because historically the MVP caliber players have taken role of various positions and possessed different play styles, the information of these box score statistics in general do not uncover much uncertainty about the MVP Pts.Won variable.
+
+# Variable Transformation
+
+```{r}
+#ggpairs(df)
+#ggplot(df, aes(Pts.Won, First)) + geom_line()
+#y = sqrt(df$First)
+First = df$First^(1/3)
+ggplot() + geom_line(aes(First,df$Pts.Won))
+cor(df$Pts.Won,First)
+```
+First transformation
+```{r}
+#ggpairs(df)
+#ggplot(df, aes(Pts.Won, First)) + geom_line()
+#y = sqrt(df$First)
+First = df$First^(1/3)
+ggplot() + geom_line(aes(First,df$Pts.Won))
+cor(df$Pts.Won,First)
+cor(df$Pts.Won,df$First)
+```
+
+
+player_efficiency_rating transformation 
+```{r}
+#ggpairs(df)
+#ggplot(df, aes(Pts.Won, First)) + geom_line()
+y = sqrt(df$player_efficiency_rating)
+player_efficiency_rating = df$player_efficiency_rating^6
+ggplot() + geom_line(aes(player_efficiency_rating,df$Pts.Won))
+cor(df$Pts.Won,player_efficiency_rating)
+cor(df$Pts.Won,df$player_efficiency_rating)
+```
+
+value_over_replacement_player transformation 
+
+```{r}
+#ggpairs(df)
+#ggplot(df, aes(Pts.Won, First)) + geom_line()
+#y = sqrt(df$player_efficiency_rating)
+value_over_replacement_player1= df$value_over_replacement_player^2
+ggplot() + geom_line(aes(value_over_replacement_player1,df$First))
+cor(df$Pts.Won,value_over_replacement_player1)
+cor(df$Pts.Won,df$value_over_replacement_player)
+```
+
+
+```{r}
+#ggpairs(df)
+#ggplot(df, aes(Pts.Won, First)) + geom_line()
+#y = sqrt(df$player_efficiency_rating)
+WS.48= df$WS.48^4
+#ggplot() + geom_line(aes(WS.48,df$First))
+cor(df$Pts.Won,WS.48)
+```
+
+
+
+# Feature Selection 
+
+```{r}
+library(caret)
+library(leaps)
+# Set seed for reproducibility
+set.seed(123)
+# Set up repeated k-fold cross-validation
+train.control <- trainControl(method = "cv", number = 5)
+# Train the model
+step.model <- train(Fertility ~., data = swiss,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:5),
+                    trControl = train.control
+                    )
+#step.model$results
+```
+
+
+```{r}
+df1 = df
+df = df[ , -which(names(df) %in% c("First","Rank","Player", "Tm","Share","Pts.Max","WS","year","team","win_shares","win_shares_per_48_minutes"))]
+```
+
+
+
+
+```{r}
+# Fit the full model 
+full.model <- lm(Pts.Won ~., data = df)
+# Stepwise regression model
+step.model <- stepAIC(full.model, direction = "both", 
+                      trace = FALSE)
+summary(step.model)
+```
+
+
+
+
+
+```{r}
+#make this example reproducible
+set.seed(1)
+
+#use 70% of dataset as training set and 30% as test set
+sample <- sample(c(TRUE, FALSE), nrow(df), replace=TRUE, prob=c(0.8,0.2))
+train  <- df[sample, ]
+test   <- df[!sample, ]
+```
+
+
+# Model Training
+
+```{r}
+ model_selected = lm(Pts.Won ~   AST + STL + FG. + WS.48 + W + 
+    seed + true_shooting_percentage + three_point_attempt_rate + 
+    defensive_rebound_percentage + total_rebound_percentage + 
+    assist_percentage + turnover_percentage + usage_percentage + 
+    offensive_win_shares + defensive_win_shares, data = train)
+```
+
+
+#MSE on training data
+```{r}
+pred = predict(model_selected, train)
+diff = train["Pts.Won"] - pred
+sum(diff^2)/length(pred)
+```
+
+
+
+# MSE on test data
+```{r}
+pred = predict(model_selected, test)
+diff = test['Pts.Won'] - pred
+sum(diff^2)/length(pred)
+```
+
+# Data Splitting for 
+
+```{r}
+#make this example reproducible
+set.seed(1)
+
+#use 70% of dataset as training set and 30% as test set
+sample <- sample(c(TRUE, FALSE), nrow(df), replace=TRUE, prob=c(0.66,0.33))
+train1  <- df[sample, ]
+test   <- df[!sample, ]
+df_cv1 = test
+```
+
+
+```{r}
+set.seed(1)
+
+#use 70% of dataset as training set and 30% as test set
+sample <- sample(c(TRUE, FALSE), nrow(train1), replace=TRUE, prob=c(0.5,0.5))
+train  <- train1[sample, ]
+test   <- train1[!sample, ]
+df_cv2 = train
+df_cv3 = test
+```
+
+
+
+# Model selection
+
+First 
+
+```{r}
+train = rbind(df_cv1,df_cv2)
+test = df_cv3
+ model_selected1 = lm(Pts.Won ~ MP + PTS + STL + FG. + W + W.L. + seed + player_efficiency_rating + true_shooting_percentage + three_point_attempt_rate + offensive_rebound_percentage + assist_percentage + block_percentage + turnover_percentage + offensive_win_shares + defensive_win_shares + offensive_box_plus_minus + box_plus_minus, data = train)
+```
+
+#MSE on training data
+```{r}
+pred = predict(model_selected1, train)
+diff = train["Pts.Won"] - pred
+sum(diff^2)/length(pred)
+```
+
+# MSE on test data
+```{r}
+pred = predict(model_selected1, test)
+diff = test['Pts.Won'] - pred
+sum(diff^2)/length(pred)
+```
+
+Second
+
+```{r}
+train = rbind(df_cv1,df_cv3)
+test = df_cv2
+ model_selected2 = lm(Pts.Won ~ MP + PTS + STL + FG. + W + W.L. + seed + player_efficiency_rating + true_shooting_percentage + three_point_attempt_rate + offensive_rebound_percentage + assist_percentage + block_percentage + turnover_percentage + offensive_win_shares + defensive_win_shares + offensive_box_plus_minus + box_plus_minus, data = train)
+```
+
+#MSE on training data
+```{r}
+pred = predict(model_selected2, train)
+diff = train["Pts.Won"] - pred
+sum(diff^2)/length(pred)
+```
+
+#MSE on test data
+```{r}
+# MSE on test data
+pred = predict(model_selected2, test)
+diff = test['Pts.Won'] - pred
+sum(diff^2)/length(pred)
+```
+
+Third
+
+```{r}
+train = rbind(df_cv2,df_cv3)
+test = df_cv1
+ model_selected3 = lm(Pts.Won ~ MP + PTS + STL + FG. + W + W.L. + seed + player_efficiency_rating + true_shooting_percentage + three_point_attempt_rate + offensive_rebound_percentage + assist_percentage + block_percentage + turnover_percentage + offensive_win_shares + defensive_win_shares + offensive_box_plus_minus + box_plus_minus, data = train)
+```
+
+#MSE on training data
+```{r}
+pred = predict(model_selected3, train)
+diff = train["Pts.Won"] - pred
+sum(diff^2)/length(pred)
+```
+
+#MSE on test data
+```{r}
+# MSE on test data
+pred = predict(model_selected3, test)
+diff = test['Pts.Won'] - pred
+sum(diff^2)/length(pred)
+```
+
+We are going to select the model which has the lowest Test MSE among the three models.
+
+# Lasso 
+
+Before variable transformation
+
+
+```{r}
+y <- df$Pts.Won
+#x = df[-c(3)]
+x = df[-c(2)]
+x = data.matrix(x)
+y = scale(y)
+x = scale(x)
+```
+
+
+```{r}
+library(glmnet)
+
+l.grid <- 10^seq(0, -6, length= 300)
+#perform k-fold cross-validation to find optimal lambda value
+cv_model <- cv.glmnet(x, y, alpha = 1, nfolds = 3, lambda = l.grid)
+
+#find optimal lambda value that minimizes test MSE
+best_lambda <- cv_model$lambda.min
+best_lambda
+
+cv_model$lambda.1se
+
+#produce plot of test MSE by lambda value
+plot(cv_model) 
+```
+
+```{r}
+l.grid <- 10^seq(10, -2, length= 300)
+
+las_reg <- glmnet(x, y, alpha=1,lambda=l.grid)
+
+plot(las_reg, xvar = "lambda", label=T)
+```
+
+
+
+
+```{r}
+best_model <- glmnet(x, y, alpha = 1, lambda = best_lambda)
+coef(best_model)
+```
+
+```{r}
+best_model1 <- glmnet(x, y, alpha = 1, lambda = cv_model$lambda.1se)
+(coef(best_model1))
+```
+
+
+```{r}
+# lambda min
+plot(coef(best_model))
+```
+
+```{r}
+# lambda 1se
+plot(coef(best_model1))
+```
+
+```{r}
+#use fitted best model to make predictions
+y_predicted <- predict(best_model, s = best_lambda, newx = x)
+
+#find SST and SSE
+sst <- sum((y - mean(y))^2)
+sse <- sum((y_predicted - y)^2)
+
+#find R-Squared
+rsq <- 1 - sse/sst
+rsq
+```
+
+```{r}
+y1_predicted <- predict(best_model, s = cv_model$lambda.min, newx = x)
+
+diff = y1_predicted - y
+
+
+qqnorm(diff, pch = 1, frame = FALSE)
+qqline(diff, col = "steelblue", lwd = 2)
+```
+
+
+After Variable Transformation
+
+
+```{r}
+df2 = df[,c('player_efficiency_rating','value_over_replacement_player','WS.48','Pts.Won','usage_percentage','turnover_percentage','steal_percentage','true_shooting_percentage','seed','W.L.' )]
+y1 <- df2$Pts.Won
+x1 = df2[-c(4)]
+x1 = data.matrix(x1)
+#y = log(y+100)
+y1 = y1^(1/1)
+y1 = scale(y1)
+x1 = scale(x1)
+```
+
+
+```{r}
+library(glmnet)
+
+l.grid <- 10^seq(0.1, -7, length= 300)
+#perform k-fold cross-validation to find optimal lambda value
+cv_model <- cv.glmnet(x1, y1, alpha = 1, nfolds = 3, lambda = l.grid)
+
+#find optimal lambda value that minimizes test MSE
+best_lambda <- cv_model$lambda.min
+best_lambda
+
+cv_model$lambda.1se
+
+#produce plot of test MSE by lambda value
+plot(cv_model) 
+```
+
+```{r}
+l.grid <- 10^seq(10, -2, length= 300)
+
+las_reg <- glmnet(x1, y1, alpha=1,lambda=l.grid)
+
+plot(las_reg, xvar = "lambda", label=T)
+```
+
+```{r}
+best_model <- glmnet(x1, y1, alpha = 1, lambda = best_lambda)
+coef(best_model)
+```
+
+```{r}
+best_model1 <- glmnet(x1, y1, alpha = 1, lambda = cv_model$lambda.1se)
+(coef(best_model1))
+```
+
+# Diagnostics
+```{r}
+y1_predicted <- predict(best_model, s = cv_model$lambda.1se, newx = x1)
+
+diff = y1_predicted - y1
+
+
+qqnorm(diff, pch = 1, frame = FALSE)
+qqline(diff, col = "steelblue", lwd = 2)
+```
+
+
+# Bayesian approach 
+
+# gprior
+
+```{r}
+lpy.X <- function(y, X, g=length(y), nu0=1,
+s20=try(summary(lm(y~ -1+X))$sigma^2,
+silent=TRUE)){
+n = dim(X)[1]
+p = dim(X)[2]
+if (p==0) { Hg = 0; s20 = mean(y^2)}
+if (p>0){ Hg = (g/(g+1)) * X %*% solve(t(X) %*% X) %*% t(X) }
+SSRg = t(y) %*% ( diag(1, nrow=n) - Hg ) %*% y 
+return(-0.5*( n*log(pi) + p*log(1+g) + (nu0+n)*log(nu0*s20 + SSRg) -
+nu0*log(nu0*s20)) +
+lgamma( (nu0+n)/2 ) - lgamma(nu0/2))
+}
+```
+
+```{r}
+ys = scale(y)
+Xs = scale(x)
+n = dim(Xs)[1]
+p = dim(Xs)[2]
+g = n
+nu0 = 1 # unit information prior
+z = rep(1, p)
+
+# picking a starting value for the marginal probability
+lpy.c = lpy.X(ys, Xs[,z==1,drop=FALSE])
+S = 3000
+Z = matrix(NA, S, p)
+B = matrix(NA, S, p)
+S2 = matrix(0,S,1)
+```
+
+
+
+
+
+```{r}
+for(s in 1:S){
+# if(s %% 100 ==0) {print(s)}
+# sample z
+
+#print("loop enter")
+for (j in sample(1:p)){
+zp = z
+##print(zp)
+zp[j] = 1 - zp[j]
+##print(zp)
+lpy.p = lpy.X(ys,Xs[, zp==1, drop=FALSE])
+##print(lpy.p)
+##print(lpy.c)
+if(zp[j]==0){r = lpy.c - lpy.p}
+if(zp[j]==1){r = lpy.p - lpy.c}
+##print(paste0("Current working dir: "))
+##print(r)
+zp[j] = rbinom(1, 1, 1/(1+exp(-r)))
+#print(zp[j])
+if(z[j] != zp[j]) {
+  lpy.c = lpy.p
+  z = zp
+  }
+}
+##print("loop exit")
+Z[s,] = z
+
+# sample s2
+pm = sum(z==1) # number of nonzero variables in the model
+if (pm==0){
+Hg = 0
+s20 = mean(y^2)
+}
+if (pm>0){
+Hg = (g/(g+1)) * Xs[,z==1,drop=F] %*% solve(t(Xs[,z==1,drop=FALSE]) %*%
+Xs[,z==1,drop=F]) %*% t(Xs[,z==1,drop=F])
+# estimated residual variance from OLS
+s20=summary(lm(ys ~ -1+Xs[,z==1,drop=F]))$sigma^2 }
+SSRg = t(ys) %*% ( diag(1,nrow=n) - Hg ) %*% ys
+
+s2 = 1/rgamma(1, (nu0+n)/2, (nu0*s20 + SSRg)/2)
+S2[s,] = s2
+
+# sample beta
+Vb = g * solve(t(Xs[,z==1,drop=F]) %*% Xs[,z==1,drop=F])/(g+1)
+Eb = Vb %*% t(Xs[,z==1,drop=F]) %*% ys
+E = matrix(rnorm(pm, 0, sqrt(s2)),1,pm)
+beta_s = t( t(E %*% chol(Vb)) + c(Eb))
+
+#Vb = solve( solve(sig0) + (t(Xs[,z==1,drop=F]) %*% Xs[,z==1,drop=F])/s2)
+#Eb = Vb %*% t(Xs[,z==1,drop=F]) %*% ys
+#print(Vb)
+#print(E)
+#print(chol(Vb))
+#print(Eb)
+c = 1
+for (j in (1:p)){
+  if(z[j]==1){
+    B[s,j] = beta_s[c]
+    c = c+1
+  }
+}
+c = 1
+}
+```
+
+```{r}
+pprob_Z = apply(Z,2,mean)
+pprob_Z = data.frame(matrix(pprob_Z,nr=1,nc=p))
+names(pprob_Z) = names(df[c(-2)])
+#row.names(pprob_Z) = 'posterior including \n probability'
+kable(pprob_Z)
+```
+
+
+
+
+```{r}
+Beta_CIb = apply(B, 2, quantile, c(0.025, 0.975), na.rm = TRUE)
+kable(data.frame(Beta_CIb), col.names = names(df[c(-2)]),
+digits=4)
+```
+
+
+# Bayesian Diagonostics
+
+Feature - PTS
+```{r}
+f = B[,4]
+data = f[!is.na(f)]
+seq = seq(1:length(data))
+ggplot() + geom_line(aes(seq,data))
+```
+
+feature - STL
+```{r}
+f = B[,7]
+data = f[!is.na(f)]
+seq = seq(1:length(data))
+ggplot() + geom_line(aes(seq,data))
+```
+
+
+feature - FG.
+```{r}
+f = B[,9]
+data = f[!is.na(f)]
+seq = seq(1:length(data))
+ggplot() + geom_line(aes(seq,data))
+```
+
+feature WS.48
+```{r}
+f = B[,12]
+data = f[!is.na(f)]
+seq = seq(1:length(data))
+ggplot() + geom_line(aes(seq,data))
+```
+
+feature - seed
+```{r}
+f = B[,15]
+data = f[!is.na(f)]
+seq = seq(1:length(data))
+ggplot() + geom_line(aes(seq,data))
+```
